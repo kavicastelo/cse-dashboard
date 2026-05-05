@@ -13,10 +13,11 @@ export const StockChart: React.FC<ChartProps> = ({ data, analysis }) => {
 
   useEffect(() => {
     if (!chartContainerRef.current) return;
-
     if (!data || data.length === 0) return;
 
     try {
+      const isIntraday = data[0].timestamp && data[0].timestamp.includes('T');
+      
       const chart = createChart(chartContainerRef.current, {
         layout: {
           background: { type: ColorType.Solid, color: 'transparent' },
@@ -25,6 +26,10 @@ export const StockChart: React.FC<ChartProps> = ({ data, analysis }) => {
         grid: {
           vertLines: { color: 'rgba(255, 255, 255, 0.05)' },
           horzLines: { color: 'rgba(255, 255, 255, 0.05)' },
+        },
+        timeScale: {
+          timeVisible: isIntraday,
+          secondsVisible: false,
         },
         width: chartContainerRef.current.clientWidth,
         height: 400,
@@ -39,15 +44,18 @@ export const StockChart: React.FC<ChartProps> = ({ data, analysis }) => {
       });
 
       const chartData = data
-        .filter(item => item.date && item.close_price !== undefined)
-        .map(item => ({
-          time: item.date,
-          open: item.open_price || item.close_price,
-          high: item.high_price || item.close_price,
-          low: item.low_price || item.close_price,
-          close: item.close_price,
-        }))
-        .sort((a, b) => a.time.localeCompare(b.time));
+        .filter(item => (item.timestamp || item.date) && item.close_price !== undefined)
+        .map(item => {
+          const time = item.timestamp ? (new Date(item.timestamp).getTime() / 1000) : item.date;
+          return {
+            time: time,
+            open: item.open_price || item.close_price,
+            high: item.high_price || item.close_price,
+            low: item.low_price || item.close_price,
+            close: item.close_price,
+          };
+        })
+        .sort((a, b) => (typeof a.time === 'number' ? a.time - (b.time as number) : a.time.localeCompare(b.time as string)));
 
       if (chartData.length === 0) {
         chart.remove();
@@ -56,8 +64,8 @@ export const StockChart: React.FC<ChartProps> = ({ data, analysis }) => {
 
       candlestickSeries.setData(chartData);
 
-      // Add SMAs if available
-      if (analysis) {
+      // Add SMAs if available (only for history usually)
+      if (analysis && !isIntraday) {
         if (analysis.sma20) {
           const sma20Series = chart.addSeries(LineSeries, { color: '#4facfe', lineWidth: 1, title: 'SMA 20' });
           const sma20Data = analysis.sma20.map((val: number | null, idx: number) => ({

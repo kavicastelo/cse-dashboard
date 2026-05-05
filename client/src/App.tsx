@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { api } from './services/api';
 import { StockChart } from './components/StockChart';
-import { TrendingUp, TrendingDown, Activity, Search, RefreshCw, Star, Trash2 } from 'lucide-react';
+import { PortfolioView } from './components/PortfolioView';
+import { TrendingUp, TrendingDown, Activity, Search, RefreshCw, Star, Trash2, PieChart, LayoutDashboard } from 'lucide-react';
 
 export default function App() {
   const [stocks, setStocks] = useState<any[]>([]);
@@ -10,6 +11,8 @@ export default function App() {
   const [marketSummary, setMarketSummary] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [timeframe, setTimeframe] = useState<'1D' | 'History'>('History');
+  const [activeTab, setActiveTab] = useState<'market' | 'portfolio'>('market');
 
   useEffect(() => {
     fetchInitialData();
@@ -17,9 +20,13 @@ export default function App() {
 
   useEffect(() => {
     if (selectedSymbol) {
-      fetchHistory(selectedSymbol);
+      if (timeframe === 'History') {
+        fetchHistory(selectedSymbol);
+      } else {
+        fetchIntraday(selectedSymbol);
+      }
     }
-  }, [selectedSymbol]);
+  }, [selectedSymbol, timeframe]);
 
   const fetchInitialData = async () => {
     setLoading(true);
@@ -56,6 +63,15 @@ export default function App() {
     }
   };
 
+  const fetchIntraday = async (symbol: string) => {
+    try {
+      const res = await api.getIntraday(symbol);
+      setHistoryData({ history: res.data, analysis: null });
+    } catch (error) {
+      console.error('Error fetching intraday:', error);
+    }
+  };
+
   const handleSync = async () => {
     setSyncing(true);
     try {
@@ -89,17 +105,21 @@ export default function App() {
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Market Intelligence & Historical Trends</p>
         </div>
         
-        <div className="market-stats glass-card">
+        <div className="market-stats glass-card" style={{ gap: '1rem' }}>
+          <nav className="tabs" style={{ display: 'flex', gap: '0.5rem', marginRight: '1rem', borderRight: '1px solid rgba(255,255,255,0.1)', paddingRight: '1rem' }}>
+            <button className={activeTab === 'market' ? 'primary' : 'secondary'} onClick={() => setActiveTab('market')}>
+              <LayoutDashboard size={16} /> Market
+            </button>
+            <button className={activeTab === 'portfolio' ? 'primary' : 'secondary'} onClick={() => setActiveTab('portfolio')}>
+              <PieChart size={16} /> Portfolio
+            </button>
+          </nav>
           <div className="stat-item">
             <span className="stat-label">ASPI Index</span>
             <span className="stat-value">12,456.20 <span className="price-change up">+0.45%</span></span>
           </div>
-          <div className="stat-item">
-            <span className="stat-label">Market Status</span>
-            <span className="stat-value" style={{ color: 'var(--accent-up)' }}>OPEN</span>
-          </div>
           <button className={`secondary ${syncing ? 'loading' : ''}`} onClick={handleSync} disabled={syncing}>
-            <RefreshCw size={16} className={syncing ? 'spin' : ''} /> {syncing ? 'Syncing...' : 'Sync Market Data'}
+            <RefreshCw size={16} className={syncing ? 'spin' : ''} /> {syncing ? 'Sync' : 'Sync'}
           </button>
         </div>
       </header>
@@ -138,7 +158,9 @@ export default function App() {
       </aside>
 
       <main className="glass-card main-view">
-        {selectedStock ? (
+        {activeTab === 'portfolio' ? (
+          <PortfolioView />
+        ) : selectedStock ? (
           <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
               <div>
@@ -159,6 +181,23 @@ export default function App() {
                   {selectedStock.percentageChange?.toFixed(2)}% Today
                 </div>
               </div>
+            </div>
+
+            <div className="chart-controls" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+              <button 
+                className={timeframe === '1D' ? 'primary' : 'secondary'} 
+                onClick={() => setTimeframe('1D')}
+                style={{ padding: '0.4rem 1rem' }}
+              >
+                1D (Intraday)
+              </button>
+              <button 
+                className={timeframe === 'History' ? 'primary' : 'secondary'} 
+                onClick={() => setTimeframe('History')}
+                style={{ padding: '0.4rem 1rem' }}
+              >
+                History (Daily)
+              </button>
             </div>
 
             <div className="chart-container glass-card">

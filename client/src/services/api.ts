@@ -7,7 +7,11 @@ export const api = {
   getStocks: () => axios.get(`${API_BASE}/stocks`),
   getStock: (symbol: string) => axios.get(`${API_BASE}/stocks/${symbol}`),
   getHistory: (symbol: string) => axios.get(`${API_BASE}/stocks/${symbol}/history`),
+  getIntraday: (symbol: string) => axios.get(`${API_BASE}/stocks/${symbol}/intraday`),
   sync: () => axios.post(`${API_BASE}/sync`),
   addToWatchlist: (symbol: string) => axios.post(`${API_BASE}/watchlist/${symbol}`),
   removeFromWatchlist: (symbol: string) => axios.delete(`${API_BASE}/watchlist/${symbol}`),
+  getPortfolio: () => axios.get(`${API_BASE}/portfolio`),
+  getTransactions: () => axios.get(`${API_BASE}/transactions`),
+  addTransaction: (tx: any) => axios.post(`${API_BASE}/transactions`, tx),
 };

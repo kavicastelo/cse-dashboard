@@ -4,6 +4,7 @@ import cron from 'node-cron';
 import { CseService } from './services/cse.service';
 import { StockRepository, StockSnapshot } from './db/repository';
 import { AnalysisUtils } from './utils/analysis';
+import { IntradayService } from './services/intraday.service';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -23,6 +24,7 @@ const syncData = async () => {
         const snapshot: StockSnapshot = {
           symbol: item.symbol,
           date: today,
+          timestamp: `${today}T14:30:00Z`, // Mark as Daily Close
           open_price: item.open || item.lastTradedPrice,
           high_price: item.high || item.lastTradedPrice,
           low_price: item.low || item.lastTradedPrice,
@@ -117,6 +119,17 @@ app.get('/api/stocks/:symbol/history', async (req, res) => {
   }
 });
 
+app.get('/api/stocks/:symbol/intraday', async (req, res) => {
+  const { symbol } = req.params;
+  const today = new Date().toISOString().split('T')[0];
+  try {
+    const history = StockRepository.getIntradayHistory(symbol, today);
+    res.json(history);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch intraday history' });
+  }
+});
+
 app.post('/api/sync', async (req, res) => {
   await syncData();
   res.json({ message: 'Sync triggered' });
@@ -132,6 +145,35 @@ app.delete('/api/watchlist/:symbol', (req, res) => {
   res.json({ message: 'Removed from watchlist' });
 });
 
+// Portfolio Endpoints
+app.get('/api/portfolio', (req, res) => {
+  try {
+    const holdings = StockRepository.getHoldings();
+    res.json(holdings);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch portfolio' });
+  }
+});
+
+app.get('/api/transactions', (req, res) => {
+  try {
+    const transactions = StockRepository.getTransactions();
+    res.json(transactions);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch transactions' });
+  }
+});
+
+app.post('/api/transactions', (req, res) => {
+  try {
+    const tx = req.body;
+    StockRepository.addTransaction(tx);
+    res.json({ message: 'Transaction recorded' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to add transaction' });
+  }
+});
+
 // Cron job: Run every day at 6 PM (after market close)
 cron.schedule('0 18 * * 1-5', () => {
   syncData();
@@ -139,4 +181,5 @@ cron.schedule('0 18 * * 1-5', () => {
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  IntradayService.start();
 });
