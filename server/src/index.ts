@@ -5,6 +5,7 @@ import { CseService } from './services/cse.service';
 import { StockRepository, StockSnapshot } from './db/repository';
 import { AnalysisUtils } from './utils/analysis';
 import { IntradayService } from './services/intraday.service';
+import { DisclosureService } from './services/disclosure.service';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -174,6 +175,31 @@ app.post('/api/transactions', (req, res) => {
   }
 });
 
+// Alert Endpoints
+app.get('/api/alerts', (req, res) => {
+  try {
+    const unread = req.query.unread === 'true';
+    const alerts = StockRepository.getAlerts(unread);
+    res.json(alerts);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch alerts' });
+  }
+});
+
+app.post('/api/alerts/read', (req, res) => {
+  try {
+    const { id } = req.body;
+    if (id) {
+      StockRepository.markAlertAsRead(id);
+    } else {
+      StockRepository.markAllAlertsAsRead();
+    }
+    res.json({ message: 'Alerts updated' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update alerts' });
+  }
+});
+
 // Cron job: Run every day at 6 PM (after market close)
 cron.schedule('0 18 * * 1-5', () => {
   syncData();
@@ -182,4 +208,5 @@ cron.schedule('0 18 * * 1-5', () => {
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   IntradayService.start();
+  DisclosureService.start();
 });

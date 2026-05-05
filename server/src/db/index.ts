@@ -45,6 +45,16 @@ db.exec(`
     avg_price REAL NOT NULL,
     last_updated TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS alerts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    symbol TEXT NOT NULL,
+    type TEXT NOT NULL, -- CROSSOVER, VOLUME_SPIKE, DISCLOSURE
+    message TEXT NOT NULL,
+    severity TEXT DEFAULT 'INFO',
+    timestamp TEXT NOT NULL,
+    is_read INTEGER DEFAULT 0
+  );
 `);
 
 export default db;

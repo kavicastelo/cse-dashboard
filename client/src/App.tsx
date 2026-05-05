@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { api } from './services/api';
 import { StockChart } from './components/StockChart';
 import { PortfolioView } from './components/PortfolioView';
-import { TrendingUp, TrendingDown, Activity, Search, RefreshCw, Star, Trash2, PieChart, LayoutDashboard } from 'lucide-react';
+import { SignalHub } from './components/SignalHub';
+import { TrendingUp, TrendingDown, Activity, Search, RefreshCw, Star, Trash2, PieChart, LayoutDashboard, Brain } from 'lucide-react';
 
 export default function App() {
   const [stocks, setStocks] = useState<any[]>([]);
@@ -124,15 +125,19 @@ export default function App() {
         </div>
       </header>
 
-      <aside className="glass-card watchlist">
-        <div className="search-box" style={{ marginBottom: '1rem', position: 'relative' }}>
-          <Search size={18} style={{ position: 'absolute', left: '12px', top: '10px', color: 'var(--text-muted)' }} />
-          <input 
-            type="text" 
-            placeholder="Search Symbols..." 
-            className="glass-card" 
-            style={{ width: '100%', padding: '0.6rem 1rem 0.6rem 2.5rem', background: 'rgba(255,255,255,0.05)' }}
-          />
+      <aside className="glass-card watchlist" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <SignalHub />
+        
+        <div className="search-section">
+          <div className="search-box" style={{ marginBottom: '1rem', position: 'relative' }}>
+            <Search size={18} style={{ position: 'absolute', left: '12px', top: '10px', color: 'var(--text-muted)' }} />
+            <input 
+              type="text" 
+              placeholder="Search Symbols..." 
+              className="glass-card" 
+              style={{ width: '100%', padding: '0.6rem 1rem 0.6rem 2.5rem', background: 'rgba(255,255,255,0.05)' }}
+            />
+          </div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', overflowY: 'auto', maxHeight: '70vh' }}>
