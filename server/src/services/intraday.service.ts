@@ -1,6 +1,7 @@
 import { CseService, TradeSummary } from './cse.service';
 import { StockRepository, StockSnapshot } from '../db/repository';
 import { MarketClock } from '../utils/market-clock';
+import { AlertService } from './alert.service';
 import nodeCron from 'node-cron';
 
 export class IntradayService {
@@ -59,6 +60,10 @@ export class IntradayService {
         savedCount++;
       }
       console.log(`Successfully saved ${savedCount} intraday snapshots.`);
+      
+      // Trigger Alert Scanning
+      await AlertService.scanAll();
+      
     } catch (error) {
       console.error('Error during intraday snapshot:', error);
     } finally {

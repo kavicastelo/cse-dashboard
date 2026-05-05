@@ -14,4 +14,6 @@ export const api = {
   getPortfolio: () => axios.get(`${API_BASE}/portfolio`),
   getTransactions: () => axios.get(`${API_BASE}/transactions`),
   addTransaction: (tx: any) => axios.post(`${API_BASE}/transactions`, tx),
+  getAlerts: (unread?: boolean) => axios.get(`${API_BASE}/alerts${unread ? '?unread=true' : ''}`),
+  markAlertsRead: (id?: number) => axios.post(`${API_BASE}/alerts/read`, { id }),
 };

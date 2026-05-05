@@ -48,4 +48,41 @@ export class AnalysisUtils {
     if (diff < -0.02) return 'downtrend';
     return 'sideways';
   }
+
+  static detectCrossover(shortSma: (number | null)[], longSma: (number | null)[]): 'golden_cross' | 'death_cross' | null {
+    if (shortSma.length < 2 || longSma.length < 2) return null;
+
+    const currentShort = shortSma[shortSma.length - 1];
+    const prevShort = shortSma[shortSma.length - 2];
+    const currentLong = longSma[longSma.length - 1];
+    const prevLong = longSma[longSma.length - 2];
+
+    if (!currentShort || !prevShort || !currentLong || !prevLong) return null;
+
+    // Golden Cross: Short crosses above Long
+    if (prevShort <= prevLong && currentShort > currentLong) {
+      return 'golden_cross';
+    }
+
+    // Death Cross: Short crosses below Long
+    if (prevShort >= prevLong && currentShort < currentLong) {
+      return 'death_cross';
+    }
+
+    return null;
+  }
+
+  static detectAnomalies(values: number[]): { index: number, zScore: number }[] {
+    if (values.length < 10) return [];
+
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    const stdDev = Math.sqrt(values.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) / values.length);
+    
+    if (stdDev === 0) return [];
+
+    return values.map((val, idx) => ({
+      index: idx,
+      zScore: (val - mean) / stdDev
+    })).filter(a => Math.abs(a.zScore) > 3); // 3-sigma rule
+  }
 }

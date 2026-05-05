@@ -42,12 +42,31 @@ export class CseService {
 
   static async fetchAllStocks() {
      try {
-      // This endpoint usually returns a list of all stocks with their current day summary
       const response = await axios.get(`${this.BASE_URL}/tradeSummary`);
       return response.data;
     } catch (error) {
       console.error('Error fetching all stocks:', error);
       throw error;
+    }
+  }
+
+  static async fetchAnnouncements(startDate: string, endDate: string) {
+    try {
+      const formData = new URLSearchParams();
+      formData.append('fromDate', startDate);
+      formData.append('toDate', endDate);
+
+      const response = await axios.post(`${this.BASE_URL}/approvedAnnouncement`, formData, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Referer': 'https://www.cse.lk/general-announcements',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
+      return response.data?.approvedAnnouncements || [];
+    } catch (error) {
+      console.error('Error fetching announcements:', error);
+      return [];
     }
   }
 }

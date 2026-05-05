@@ -144,4 +144,28 @@ export class StockRepository {
   static getTransactions() {
     return db.prepare('SELECT * FROM transactions ORDER BY date DESC').all();
   }
+
+  // Alert Methods
+  static createAlert(alert: { symbol: string, type: string, message: string, severity?: string }) {
+    const stmt = db.prepare(`
+      INSERT INTO alerts (symbol, type, message, severity, timestamp)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+    return stmt.run(alert.symbol, alert.type, alert.message, alert.severity || 'INFO', new Date().toISOString());
+  }
+
+  static getAlerts(unreadOnly = false) {
+    const query = unreadOnly 
+      ? 'SELECT * FROM alerts WHERE is_read = 0 ORDER BY timestamp DESC'
+      : 'SELECT * FROM alerts ORDER BY timestamp DESC LIMIT 50';
+    return db.prepare(query).all();
+  }
+
+  static markAlertAsRead(id: number) {
+    return db.prepare('UPDATE alerts SET is_read = 1 WHERE id = ?').run(id);
+  }
+
+  static markAllAlertsAsRead() {
+    return db.prepare('UPDATE alerts SET is_read = 1').run();
+  }
 }
